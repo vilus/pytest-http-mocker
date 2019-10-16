@@ -1,0 +1,3 @@
+pytest
+mocker-client
+pytest-ordering
