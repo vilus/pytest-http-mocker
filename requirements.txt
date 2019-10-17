@@ -1,3 +1,4 @@
 pytest
 mocker-client
 pytest-ordering
+requests

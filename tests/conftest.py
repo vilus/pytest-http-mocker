@@ -6,28 +6,24 @@ from mocker_client import MockServer
 
 def pytest_addoption(parser):
     group = parser.getgroup('http_mocker')
-    '''
-    mocker-url
-    mock-ttl
-    ...
-    '''
     group.addoption("--mocker-url", default='http://127.0.0.1:8080/mocker_api/mocks/',
                     help="TODO")
-    # TODO
+    group.addoption("--mocker-retries", default=10, type=int,
+                    help="TODO")
+    group.addoption("--mocker-retry-waittime", default=60, type=int,
+                    help="TODO")
 
 
 class HttpMocker:
-    def __init__(self, mock_srv=None, default_ttl=120, default_retries=10, default_retry_waittime=60):
+    def __init__(self, mock_srv=None, default_retries=10, default_retry_waittime=60):
         self.srv = mock_srv if mock_srv else MockServer(url='http://127.0.0.1:8080/mocker_api/mocks/')
-        self.default_ttl = default_ttl
         self.default_retries = default_retries
         self.default_retry_waittime = default_retry_waittime
-        self.created_mocks = []  # TODO: None
+        self.created_mocks = []
 
     def create_mocks(self, params, *, retries=None, retry_waittime=None):
-        # if isinstance(params, dict):
-        #     params = [params]
-        # TODO
+        if isinstance(params, dict):
+            params = [params]
 
         retries = retries if retries else self.default_retries
         retry_waittime = retry_waittime if retry_waittime else self.default_retry_waittime
@@ -35,8 +31,7 @@ class HttpMocker:
 
         for _ in range(retries):
             try:
-                self.created_mocks.append(self.srv.create_mock(params))
-                # TODO: self.created_mocks = self.srv.create_mocks(params)
+                self.created_mocks = self.srv.create_mocks(params)
             except Exception as e:
                 errs.append(e)  # TODO: delete dup error
             else:
@@ -68,9 +63,12 @@ class HttpMocker:
 @pytest.fixture
 def http_mocker(request):
     mocker_url = request.config.getoption('--mocker-url')
-    mock_srv = MockServer(url=mocker_url)
-    # TODO: other options (defaults for ttl, retries, waittime, ...)
+    retries = request.config.getoption('--mocker-retries')
+    retry_waittime = request.config.getoption('--mocker-retry-waittime')
 
-    http_mocker = HttpMocker(mock_srv=mock_srv, default_retries=1, default_retry_waittime=1)
+    mock_srv = MockServer(url=mocker_url)
+    http_mocker = HttpMocker(mock_srv=mock_srv,
+                             default_retries=retries,
+                             default_retry_waittime=retry_waittime)
     yield http_mocker
     http_mocker.delete_mocks()
