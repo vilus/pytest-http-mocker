@@ -53,11 +53,8 @@ class HttpMocker:
                 if mock_info['is_expired']:
                     expired_mocks.append(f'expired mock: {m.data}')
 
-        if unexpected_err:
-            raise IOError(unexpected_err)
-
-        if expired_mocks:
-            raise RuntimeError(expired_mocks)
+        if expired_mocks or unexpected_err:
+            raise RuntimeError(expired_mocks + unexpected_err)
 
 
 @pytest.fixture
